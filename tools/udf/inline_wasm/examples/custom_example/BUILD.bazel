@@ -1,0 +1,40 @@
+load("//tools/udf/inline_wasm:wasm.bzl", "cc_inline_wasm_udf_delta")
+load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
+
+# builders/tools/bazel-debian run --config=emscripten //tools/udf/inline_wasm/examples/custom_example:handle_request_with_wasm_delta
+cc_inline_wasm_udf_delta(
+    name = "handle_request_with_wasm_delta",
+    srcs = ["custom_logic.cc"],
+    custom_udf_js = "my_udf.js",
+    output_file_name = "DELTA_0000000000000012",
+    tags = ["manual"],
+    wasm_as_inline_array = True,
+    deps = [
+        "@com_google_absl//absl/status:statusor",
+        "@nlohmann_json//:lib",
+    ],
+)
+
+# builders/tools/bazel-debian build --config=emscripten //tools/udf/inline_wasm/examples/custom_example:generate_data_delta
+run_binary(
+    name = "generate_data_delta",
+    srcs = [
+        ":custom_data.csv",
+    ],
+    outs = [
+        "DELTA_0000000000000001",
+    ],
+    args = [
+        "format_data",
+        "--input_file",
+        "$(location custom_data.csv)",
+        "--input_format",
+        "CSV",
+        "--output_file",
+        "$(location DELTA_0000000000000001)",
+        "--output_format",
+        "DELTA",
+    ],
+    tags = ["manual"],
+    tool = "//tools/data_cli",
+)
